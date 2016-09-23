@@ -2,8 +2,10 @@ require 'locomotive_engine_authentication/liquid/tags/authorized'
 
 module LocomotiveEngineAuthentication
   module Middlewares
+    
+    # Register Liquid Tags and Drops
     class RegisterLiquidMiddleware
-       
+      
       def initialize app
          @app = app
       end
@@ -12,7 +14,7 @@ module LocomotiveEngineAuthentication
         ::Liquid::Template.register_tag('authorized', LocomotiveEngineAuthentication::Liquid::Tags::Authorized)
         @app.call env
       end
-      
     end
+    
   end
 end

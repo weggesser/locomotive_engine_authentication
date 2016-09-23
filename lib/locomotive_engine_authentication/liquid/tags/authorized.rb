@@ -8,17 +8,17 @@ module LocomotiveEngineAuthentication
 
         def initialize( tag_name, markup, options)
          if markup =~ Syntax
-           page = $1
+           @page = $1
          else
-           raise ::Liquid::SyntaxError.new("Valid syntax: session_assign [var] = [source]")
+           raise ::Liquid::SyntaxError.new("Valid syntax: authorized [page]")
          end
          super
         end
         
         def render context
           request = context.registers[:request]
-          
-          !request.session["authorized_user_id"].blank?
+          # if @page.protected
+          !request.session["current_user"].blank?
         end
         
       end
