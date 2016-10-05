@@ -17,17 +17,18 @@ module LocomotiveEngineAuthentication
           # REGISTRATION
           if page.handle == site.protected_register_page_handle and !params[:site_user].blank?          
             site_user = ::SiteUser.create params[:site_user]  
-            # raise "X"        
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
           end
           
           # LOGIN
           if page.handle == site.protected_login_page_handle and !params[:site_user].blank?
             site_user = ::SiteUser.find_for_database_authentication({ email: params[:site_user][:email] })
-            if !site_user.nil? and site_user.valid_password? params[:site_user][:password]
+            if !site_user.nil? and site_user.valid_password? params[:site_user][:password] and !site_user.locked
               request.session[:current_site_user] = site_user
               env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
               redirect_to_page site.protected_default_page_handle , 302          
+            elsif !site_user.nil? and site_user.valid_password? params[:site_user][:password] and site_user.locked
+              env['steam.liquid_assigns'].merge!({ 'errors' => 'login_locked_error' })
             else
               env['steam.liquid_assigns'].merge!({ 'errors' => 'login_error' })
             end
