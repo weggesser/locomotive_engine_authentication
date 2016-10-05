@@ -28,6 +28,8 @@ module LocomotiveEngineAuthentication
               request.session[:current_site_user] = site_user
               env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
               redirect_to_page site.protected_default_page_handle , 302          
+            else
+              env['steam.liquid_assigns'].merge!({ 'errors' => 'login_error' })
             end
           end
           
