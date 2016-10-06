@@ -15,9 +15,12 @@ module LocomotiveEngineAuthentication
         
         if ::Locomotive::Steam.configuration.mode != :test
           # REGISTRATION
-          if page.handle == site.protected_register_page_handle and !params[:site_user].blank?          
-            site_user = ::SiteUser.create params[:site_user]  
+          if page.handle == site.protected_register_page_handle and !params[:site_user].blank?
+            site_user = ::SiteUser.new params[:site_user]  
+            site_user.site_id = site._id
+            site_user.save
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+            # raise "X"
           end
           
           # LOGIN
