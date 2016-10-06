@@ -29,7 +29,7 @@ module LocomotiveEngineAuthentication
             if !site_user.nil? and site_user.valid_password? params[:site_user][:password] and !site_user.locked
               request.session[:current_site_user] = site_user
               env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
-              redirect_to_page site.protected_default_page_handle , 302          
+              redirect_to_page site.protected_default_page_handle , 302
             elsif !site_user.nil? and site_user.valid_password? params[:site_user][:password] and site_user.locked
               env['steam.liquid_assigns'].merge!({ 'errors' => 'login_locked_error' })
             else
@@ -41,7 +41,7 @@ module LocomotiveEngineAuthentication
           if path == 'logout'
             request.session[:current_site_user] = nil
             env['steam.liquid_assigns'].merge!({ 'site_user' => nil })
-            redirect_to '/' , 302   
+            redirect_to_page site.protected_default_page_handle , 302
           end
         
         end
