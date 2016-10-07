@@ -18,9 +18,13 @@ module LocomotiveEngineAuthentication
           if page.handle == site.protected_register_page_handle and !params[:site_user].blank?
             site_user = ::SiteUser.new params[:site_user]  
             site_user.site_id = site._id
+            site_user.doccheck = true if params[:site_user][:doccheck] == 'on'
             site_user.save
+            if site_user.valid? and site_user.doccheck
+              request.session[:doccheck_site_user] = site_user.id
+              redirect_to_page site.protected_doccheck_page_handle , 302
+            end
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
-            # raise "X"
           end
           
           # LOGIN
@@ -42,6 +46,21 @@ module LocomotiveEngineAuthentication
             request.session[:current_site_user] = nil
             env['steam.liquid_assigns'].merge!({ 'site_user' => nil })
             redirect_to_page site.protected_default_page_handle , 302
+          end
+          
+          # DOCCHECK
+          if path == 'doccheck-return'
+            if !request.session[:doccheck_site_user].blank?
+              site_user = ::SiteUser.find request.session[:doccheck_site_user]
+              site_user.locked = false
+              site_user.save
+              request.session[:current_site_user] = site_user
+              request.session[:doccheck_site_user] = nil
+              redirect_to_page site.protected_default_page_handle , 302
+            else
+              request.session[:doccheck_site_user] = nil
+              redirect_to_page site.protected_register_page_handle , 302
+            end
           end
         
         end

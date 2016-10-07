@@ -10,6 +10,8 @@ module Locomotive::Steam
       super({
         first_name:             nil,
         last_name:              false,
+        country:                nil,
+        doccheck:               false,
         locked:                 true,
         email:                  nil,
         password:               nil,
