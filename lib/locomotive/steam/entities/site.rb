@@ -7,7 +7,7 @@ class Locomotive::Steam::Site
     self[:protected_login_page_handle] || "index"
   end
   
-  attr_writer :  
+  attr_writer :protected_default_page_handle
   def protected_default_page_handle
     self[:protected_default_page_handle] || "index"
   end

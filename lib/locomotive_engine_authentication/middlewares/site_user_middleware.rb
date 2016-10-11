@@ -67,8 +67,7 @@ module LocomotiveEngineAuthentication
           if page.handle == site.reset_password_page_handle
             unless params[:token].blank?
               site_user = SiteUser.where({ reset_password_token: params[:token] }).first
-            end
-          
+            end          
             if site_user
               if params[:site_user] and site_user.update_attributes( params[:site_user] )
                 env['steam.liquid_assigns'].merge!({ 'messages' => 'reset_password_success_message' })
