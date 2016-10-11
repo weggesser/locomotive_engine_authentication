@@ -14,6 +14,7 @@ module Locomotive::Steam
         doccheck:               false,
         locked:                 true,
         email:                  nil,
+        reset_password_token:   nil,
         password:               nil,
         password_confirmation:  nil,
         updated_at:             Time.zone.now

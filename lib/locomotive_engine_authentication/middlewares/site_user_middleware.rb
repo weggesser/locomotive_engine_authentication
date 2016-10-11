@@ -64,10 +64,13 @@ module LocomotiveEngineAuthentication
           
           
           # RESET PASSWORD
-          if page.handle == site.reset_password_page_handle and !params[:site_user].blank? and !params[:token].blank?
-            site_user = SiteUser.find_by reset_password_token: params[:token]
-            if site_user     
-              if site_user.update_attributes( params[:site_user] )
+          if page.handle == site.reset_password_page_handle
+            unless params[:token].blank?
+              site_user = SiteUser.find_by reset_password_token: params[:token]
+            end
+          
+            if site_user
+              if params[:site_user] and site_user.update_attributes( params[:site_user] )
                 env['steam.liquid_assigns'].merge!({ 'messages' => 'reset_password_success_message' })
               end
               env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
