@@ -66,7 +66,7 @@ module LocomotiveEngineAuthentication
           # RESET PASSWORD
           if page.handle == site.reset_password_page_handle
             unless params[:token].blank?
-              site_user = SiteUser.find_by reset_password_token: params[:token]
+              site_user = SiteUser.where({ reset_password_token: params[:token] }).first
             end
           
             if site_user
