@@ -22,5 +22,15 @@ class Locomotive::Steam::Site
     self[:protected_doccheck_page_handle] || "index"
   end
   
+  attr_writer :reset_password_page_handle
+  def reset_password_page_handle
+    self[:reset_password_page_handle] || "index"
+  end
+  
+  attr_writer :request_reset_password_page_handle
+  def request_reset_password_page_handle
+    self[:request_reset_password_page_handle] || "index"
+  end
+  
   
 end

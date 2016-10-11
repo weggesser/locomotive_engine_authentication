@@ -19,10 +19,13 @@ module LocomotiveEngineAuthentication
             site_user = ::SiteUser.new params[:site_user]  
             site_user.site_id = site._id
             site_user.doccheck = true if params[:site_user][:doccheck] == 'on'
-            site_user.save
+            site_user.save if site_user.valid?
+            
             if site_user.valid? and site_user.doccheck
               request.session[:doccheck_site_user] = site_user.id
               redirect_to_page site.protected_doccheck_page_handle , 302
+            elsif site_user.valid? and !site_user.doccheck
+              ::SiteUserMailer.new_registration( site_user ).deliver_now
             end
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
           end
@@ -40,6 +43,40 @@ module LocomotiveEngineAuthentication
               env['steam.liquid_assigns'].merge!({ 'errors' => 'login_error' })
             end
           end
+          
+          # REQUEST RESET PASSWORD
+          if page.handle == site.request_reset_password_page_handle and !params[:email].blank?
+            site_user = SiteUser.find_by email: params[:email]
+            if site_user     
+                       
+              raw, enc = Devise.token_generator.generate(::SiteUser, :reset_password_token)
+              site_user.reset_password_token   = enc
+              site_user.reset_password_sent_at = Time.now.utc
+              site_user.save( validate: false )
+              site_user.save
+              ::SiteUserMailer.reset_password( site_user ).deliver_now
+              # Rails.logger.info "--------------------------------------------> "
+              env['steam.liquid_assigns'].merge!({ 'messages' => 'request_reset_password_success_message' })
+            else
+              env['steam.liquid_assigns'].merge!({ 'messages' => 'request_reset_password_failure_message' })
+            end
+          end
+          
+          
+          # RESET PASSWORD
+          if page.handle == site.reset_password_page_handle and !params[:site_user].blank? and !params[:token].blank?
+            site_user = SiteUser.find_by reset_password_token: params[:token]
+            if site_user     
+              if site_user.update_attributes( params[:site_user] )
+                env['steam.liquid_assigns'].merge!({ 'messages' => 'reset_password_success_message' })
+              end
+              env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+            else
+              env['steam.liquid_assigns'].merge!({ 'messages' => 'reset_password_token_failure_message' })
+            end
+          end
+            
+          
           
           # LOGOUT
           if path == 'logout'
