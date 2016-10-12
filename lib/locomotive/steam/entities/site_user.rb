@@ -17,6 +17,8 @@ module Locomotive::Steam
         reset_password_token:   nil,
         password:               nil,
         password_confirmation:  nil,
+        locale:                 nil,
+        sex:                    nil,
         updated_at:             Time.zone.now
       }.merge(attributes))
     end

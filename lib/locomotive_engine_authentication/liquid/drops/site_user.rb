@@ -1,7 +1,7 @@
 module LocomotiveEngineAuthentication::Liquid::Drops
   class SiteUser < ::Locomotive::Steam::Liquid::Drops::Base
 
-    delegate :first_name, :last_name, :email, :locked, :title, :suffix, :reset_password_token, to: :@_source
+    delegate :first_name, :last_name, :email, :locked, :title, :suffix, :reset_password_token, :sex, :locale to: :@_source
 
     def created?
       !@_source.new_record?
