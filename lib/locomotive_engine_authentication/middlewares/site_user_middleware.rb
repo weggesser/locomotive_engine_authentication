@@ -21,6 +21,7 @@ module LocomotiveEngineAuthentication
             site_user.doccheck = true if params[:site_user][:doccheck] == 'on'
             site_user.save if site_user.valid?
             
+            
             if site_user.valid? and site_user.doccheck
               request.session[:doccheck_site_user] = site_user.id
               redirect_to_page site.protected_doccheck_page_handle , 302

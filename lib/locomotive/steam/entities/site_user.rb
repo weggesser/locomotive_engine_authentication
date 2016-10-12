@@ -9,7 +9,7 @@ module Locomotive::Steam
     def initialize(attributes)
       super({
         first_name:             nil,
-        last_name:              false,
+        last_name:              nil,
         country:                nil,
         doccheck:               false,
         locked:                 true,
