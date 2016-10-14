@@ -14,6 +14,15 @@ module LocomotiveEngineAuthentication
       def _call
         
         if ::Locomotive::Steam.configuration.mode != :test
+          
+          if page.handle == site.protected_register_page_handle and request.session[:locked_site_user]
+            Rails.logger.warn  "#{request.session[:locked_site_user]} --> LOCKED"
+            site_user = ::SiteUser.find( request.session[:locked_site_user] )
+            env['steam.liquid_assigns'].merge!({ 'locked_site_user' => site_user.to_liquid })
+            request.session[:locked_site_user] = nil
+          end
+          
+          
           # REGISTRATION
           if page.handle == site.protected_register_page_handle and !params[:site_user].blank?
             site_user = ::SiteUser.new params[:site_user]  
@@ -34,11 +43,7 @@ module LocomotiveEngineAuthentication
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
           end
           
-          if page.handle == site.protected_register_page_handle and request.session[:locked_site_user]
-            ::SiteUser.find( request.session[:locked_site_user] )
-            env['steam.liquid_assigns'].merge!({ 'locked_site_user' => site_user.to_liquid })
-            request.session[:locked_site_user] = nil
-          end
+          
           
           # LOGIN
           if page.handle == site.protected_login_page_handle and !params[:site_user].blank?
