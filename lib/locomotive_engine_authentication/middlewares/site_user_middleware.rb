@@ -28,8 +28,16 @@ module LocomotiveEngineAuthentication
               redirect_to_page site.protected_doccheck_page_handle , 302
             elsif site_user.valid? and !site_user.doccheck
               ::SiteUserMailer.new_registration( site_user ).deliver_now
+              request.session[:locked_site_user] = site_user.id
+              redirect_to_page site.protected_register_page_handle , 302
             end
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+          end
+          
+          if page.handle == site.protected_register_page_handle and request.session[:locked_site_user]
+            ::SiteUser.find( request.session[:locked_site_user] )
+            env['steam.liquid_assigns'].merge!({ 'locked_site_user' => site_user.to_liquid })
+            request.session[:locked_site_user] = nil
           end
           
           # LOGIN
@@ -103,6 +111,9 @@ module LocomotiveEngineAuthentication
             end
           end
         
+        else
+          # WAGON HERE !!!
+          
         end
         
         
