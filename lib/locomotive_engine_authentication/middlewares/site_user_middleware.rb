@@ -62,7 +62,7 @@ module LocomotiveEngineAuthentication
           # REQUEST RESET PASSWORD
           if page.handle == site.request_reset_password_page_handle and !params[:email].blank?
             site_user = SiteUser.find_by email: params[:email]
-            if site_user
+            if site_user 
               raw, enc = Devise.token_generator.generate(::SiteUser, :reset_password_token)
               site_user.reset_password_token   = enc
               site_user.reset_password_sent_at = Time.now.utc

@@ -6,7 +6,9 @@ require_relative  'locomotive_engine_authentication/middlewares/site_user_middle
 require_relative  'locomotive/steam/liquid/drops/page'
 
 Locomotive::Steam.configure_extension do |config|
-  config.middleware.insert_after Locomotive::Steam::Middlewares::Page, LocomotiveEngineAuthentication::Middlewares::AuthorizationMiddleware
-  config.middleware.insert_after Locomotive::Steam::Middlewares::Page, LocomotiveEngineAuthentication::Middlewares::SiteUserMiddleware
-  config.middleware.insert_after Locomotive::Steam::Middlewares::TemplatizedPage, LocomotiveEngineAuthentication::Middlewares::RegisterLiquidMiddleware
+  unless config.middleware.index_of( LocomotiveEngineAuthentication::Middlewares::AuthorizationMiddleware ) == 0
+    config.middleware.insert_after Locomotive::Steam::Middlewares::Page, LocomotiveEngineAuthentication::Middlewares::AuthorizationMiddleware
+    config.middleware.insert_after Locomotive::Steam::Middlewares::Page, LocomotiveEngineAuthentication::Middlewares::SiteUserMiddleware
+    config.middleware.insert_after Locomotive::Steam::Middlewares::TemplatizedPage, LocomotiveEngineAuthentication::Middlewares::RegisterLiquidMiddleware
+  end
 end
