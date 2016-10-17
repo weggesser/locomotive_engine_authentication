@@ -12,7 +12,7 @@ module LocomotiveEngineAuthentication
       include ::LocomotiveEngineAuthentication::Helpers
 
       def _call
-        
+        # raise "MODE: #{::Locomotive::Steam.configuration.mode}"
         if ::Locomotive::Steam.configuration.mode != :test
           
           if page.handle == site.protected_register_page_handle and request.session[:locked_site_user]
@@ -118,6 +118,17 @@ module LocomotiveEngineAuthentication
         
         else
           # WAGON HERE !!!
+          if page.handle == 'login'  and !params[:site_user].blank?
+            site_user = ::Locomotive::Steam::SiteUser.new({ first_name: 'Jane', last_name: 'Doe' })
+            request.session[:current_site_user] = site_user
+            env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+          end
+          
+          if path == 'logout'
+            request.session[:current_site_user] = nil
+            env['steam.liquid_assigns'].merge!({ 'site_user' => nil })
+            redirect_to_page 'home' , 302
+          end
           
         end
         

@@ -1,4 +1,4 @@
-require_dependency File.join Gem.loaded_specs['locomotivecms_steam'].full_gem_path, 'lib/locomotive/steam/models/entity'
+# require_dependency File.join Gem.loaded_specs['locomotivecms_steam'].full_gem_path, 'lib/locomotive/steam/models/entity'
 require_relative  '../../../locomotive_engine_authentication/liquid/drops/site_user'
 
 module Locomotive::Steam
@@ -26,6 +26,10 @@ module Locomotive::Steam
   
     def to_liquid
       ::LocomotiveEngineAuthentication::Liquid::Drops::SiteUser.new self
+    end
+    
+    def has_access_to? site
+      true
     end
 
   end
