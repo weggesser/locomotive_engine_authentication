@@ -1,5 +1,6 @@
 require           'locomotive/steam'
 require_relative  'locomotive/steam/entities/page'
+require_relative  'locomotive/steam/entities/site'
 require_relative  'locomotive_engine_authentication/middlewares/register_liquid_middleware'
 require_relative  'locomotive_engine_authentication/middlewares/authorization_middleware'
 require_relative  'locomotive_engine_authentication/middlewares/site_user_middleware'
