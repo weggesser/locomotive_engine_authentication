@@ -108,8 +108,9 @@ module LocomotiveEngineAuthentication
                 # What is that?
                 request.session[:current_site_user] = site_user
                 env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+                env['steam.liquid_assigns'].merge!({ 'messages' => 'update_account_success_message' })
               else
-                env['steam.liquid_assigns'].merge!({ 'messages' => 'update_account_token_failure_message' })
+                env['steam.liquid_assigns'].merge!({ 'messages' => 'update_account_failure_message' })
               end
             end
           end
@@ -139,7 +140,7 @@ module LocomotiveEngineAuthentication
         else
           # WAGON HERE !!!
           if page.handle == 'login'  and !params[:site_user].blank?
-            site_user = ::Locomotive::Steam::SiteUser.new({ first_name: 'Jane', last_name: 'Doe' })
+            site_user = ::Locomotive::Steam::SiteUser.new({ first_name: 'Jane', last_name: 'Doe', title:'' })
             request.session[:current_site_user] = site_user
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
           end
