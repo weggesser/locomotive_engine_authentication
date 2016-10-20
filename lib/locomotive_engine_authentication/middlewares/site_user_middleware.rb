@@ -99,8 +99,21 @@ module LocomotiveEngineAuthentication
               env['steam.liquid_assigns'].merge!({ 'messages' => 'reset_password_token_failure_message' })
             end
           end
-            
-          
+
+          # update-account
+          if path == 'account' and !params[:site_user].blank? and request.session[:current_site_user] != nil
+            site_user = SiteUser.where({ id: request.session[:current_site_user]['id'] }).first
+            if site_user   
+              if site_user.update_attributes( params[:site_user] )
+                # What is that?
+                request.session[:current_site_user] = site_user
+                env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+                env['steam.liquid_assigns'].merge!({ 'messages' => 'update_account_success_message' })
+              else
+                env['steam.liquid_assigns'].merge!({ 'messages' => 'update_account_failure_message' })
+              end
+            end
+          end
           
           # LOGOUT
           if path == 'logout'
@@ -127,7 +140,7 @@ module LocomotiveEngineAuthentication
         else
           # WAGON HERE !!!
           if page.handle == 'login'  and !params[:site_user].blank?
-            site_user = ::Locomotive::Steam::SiteUser.new({ first_name: 'Jane', last_name: 'Doe' })
+            site_user = ::Locomotive::Steam::SiteUser.new({ first_name: 'Jane', last_name: 'Doe', title:'' })
             request.session[:current_site_user] = site_user
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
           end
