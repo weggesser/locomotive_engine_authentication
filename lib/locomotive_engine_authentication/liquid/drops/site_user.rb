@@ -4,7 +4,7 @@ module LocomotiveEngineAuthentication::Liquid::Drops
     delegate :first_name, :last_name, :email, :locked, :title, :suffix, :reset_password_token, :sex, :locale, to: :@_source
 
     def created?
-      !@_source.new_record?
+      !@_source.created_at.nil?
     end
 
     def errors
