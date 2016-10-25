@@ -37,7 +37,7 @@ module LocomotiveEngineAuthentication
               redirect_to_page site.protected_doccheck_page_handle , 302
             elsif site_user.valid? and !site_user.doccheck
               ::SiteUserMailer.new_registration( site_user ).deliver_now
-              env['steam.liquid_assigns'].merge!({ 'locked_site_user' => site_user.to_liquid })
+              env['steam.liquid_assigns'].merge!({ 'site_user_created' => true })
               # request.session[:locked_site_user] = site_user.id
               # redirect_to_page site.protected_register_page_handle , 302
             end
@@ -89,14 +89,17 @@ module LocomotiveEngineAuthentication
                 site_user = nil
               end
             end 
-                     
+            
+            # set action in order to set appropriate translation keys
+            params[:token].blank? and site_user ? action = "change" : action = "reset"
+            
             if site_user
               if params[:site_user] and site_user.update_attributes( params[:site_user] )
-                env['steam.liquid_assigns'].merge!({ 'messages' => 'reset_password_success_message' })
+                env['steam.liquid_assigns'].merge!({ 'messages' => "#{action}_password_success_message" })
               end
               env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
             else
-              env['steam.liquid_assigns'].merge!({ 'messages' => 'reset_password_token_failure_message' })
+              env['steam.liquid_assigns'].merge!({ 'messages' => "#{action}_password_token_failure_message" })
             end
           end
 
