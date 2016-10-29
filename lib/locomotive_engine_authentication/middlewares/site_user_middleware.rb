@@ -13,6 +13,7 @@ module LocomotiveEngineAuthentication
 
       def _call
         
+        env['steam.liquid_assigns'].merge!({ 'doc_check_token' => ENV['DOC_CHECK_TOKEN'] })
         # skip this when using wagon
         if ::Locomotive::Steam.configuration.mode != :test
           
@@ -24,22 +25,29 @@ module LocomotiveEngineAuthentication
           
           
           # REGISTRATION
-          if page.handle == site.protected_register_page_handle and !params[:site_user].blank?
-            site_user = ::SiteUser.new params[:site_user]  
-            site_user.site_id = site._id
-            site_user.doccheck = true if params[:site_user][:doccheck] == 'on'
-            site_user.save if site_user.valid?
-            
-            ::Rails.logger.warn "---------> NEW REGISTRATION WITH #{site_user.email} - #{site_user.valid?}"
+          if page.handle == site.protected_register_page_handle and (!params[:site_user].blank? or !request.session[:doccheck_site_user].nil?)
+            if !request.session[:doccheck_site_user].nil?
+              site_user = ::SiteUser.new request.session[:doccheck_site_user]
+              request.session[:doccheck_site_user] = nil
+            else
+              site_user = ::SiteUser.new params[:site_user]  
+              site_user.site_id = site._id
+              site_user.doccheck = true if params[:site_user][:doccheck] == 'on'
+              # site_user.save if site_user.valid?
+            end
+            site_user.validate
             
             if site_user.valid? and site_user.doccheck
-              request.session[:doccheck_site_user] = site_user.id
+              request.session[:doccheck_site_user] = params[:site_user]
               redirect_to_page site.protected_doccheck_page_handle , 302
             elsif site_user.valid? and !site_user.doccheck
-              ::SiteUserMailer.new_registration( site_user ).deliver_now
-              env['steam.liquid_assigns'].merge!({ 'site_user_created' => true })
-              # request.session[:locked_site_user] = site_user.id
-              # redirect_to_page site.protected_register_page_handle , 302
+              success = site_user.save
+              if success
+                ::SiteUserMailer.new_registration( site_user ).deliver_now
+                env['steam.liquid_assigns'].merge!({ 'site_user_created' => true })
+              else
+                env['steam.liquid_assigns'].merge!({ 'site_user_created' => false })
+              end
             end
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
           end
@@ -91,7 +99,7 @@ module LocomotiveEngineAuthentication
             end 
             
             # set action in order to set appropriate translation keys
-            params[:token].blank? and site_user ? action = "change" : action = "reset"
+            ( params[:token].blank? and site_user ) ? action = "change" : action = "reset"
             
             if site_user
               if params[:site_user] and site_user.update_attributes( params[:site_user] )
@@ -102,7 +110,7 @@ module LocomotiveEngineAuthentication
               env['steam.liquid_assigns'].merge!({ 'messages' => "#{action}_password_token_failure_message" })
             end
           end
-
+          
           # update-account
           if path == 'account' and !params[:site_user].blank? and request.session[:current_site_user] != nil
             site_user = SiteUser.where({ id: request.session[:current_site_user]['id'] }).first
@@ -128,12 +136,19 @@ module LocomotiveEngineAuthentication
           # DOCCHECK
           if path == 'doccheck-return'
             if !request.session[:doccheck_site_user].blank?
-              site_user = ::SiteUser.find request.session[:doccheck_site_user]
+              site_user = ::SiteUser.new request.session[:doccheck_site_user] # ::SiteUser.find request.session[:doccheck_site_user]
+              site_user.site_id = site._id
+              site_user.doccheck = true
               site_user.locked = false
-              site_user.save
-              request.session[:current_site_user] = site_user
-              request.session[:doccheck_site_user] = nil
-              redirect_to_page site.protected_default_page_handle , 302
+              success = site_user.save
+              # raise "X"
+              if success
+                request.session[:current_site_user] = site_user
+                request.session[:doccheck_site_user] = nil
+                redirect_to_page site.protected_default_page_handle , 302
+              else
+                redirect_to_page site.protected_register_page_handle , 302
+              end
             else
               request.session[:doccheck_site_user] = nil
               redirect_to_page site.protected_register_page_handle , 302
