@@ -66,11 +66,9 @@ module LocomotiveEngineAuthentication
               confirmation_site_user.email_confirmed_token = nil
               success = confirmation_site_user.save
               if success
-                # TODO i18n
-                env['steam.liquid_assigns'].merge!({ 'messages' => "sucess_email_reset_message" })
+                env['steam.liquid_assigns'].merge!({ 'messages' => "sucess_email_confirm_message" })
               else
-                # TODO i18n
-                env['steam.liquid_assigns'].merge!({ 'messages' => "save_failure_email_reset_message" })
+                env['steam.liquid_assigns'].merge!({ 'messages' => "save_failure_email_confirm_message" })
               end
             else
               env['steam.liquid_assigns'].merge!({ 'messages' => "failure_email_reset_message" })
@@ -86,7 +84,6 @@ module LocomotiveEngineAuthentication
                 env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
                 redirect_to_page site.protected_default_page_handle , 302
               else
-                # TODO i18n
                 env['steam.liquid_assigns'].merge!({ 'errors' => 'login_email_not_confirmed_error' })  
               end
             elsif !site_user.nil? and site_user.valid_password? params[:site_user][:password] and site_user.locked
