@@ -37,17 +37,17 @@ module LocomotiveEngineAuthentication
             end
             site_user.email_confirmed_token = SecureRandom.uuid
             site_user.email_confirmed = false
+            # TODO double check, if doccheck user should not need confirmation
+            site_user.email_confirmed = true if site_user.doccheck
             site_user.validate
             if site_user.valid? and site_user.doccheck
               request.session[:doccheck_site_user] = params[:site_user]
               redirect_to_page site.protected_doccheck_page_handle , 302
             elsif site_user.valid? and !site_user.doccheck
-              raise "X"
               puts "-------------------- the next line is going to crash :-( ---------------------------"
               success = site_user.save
               puts "--------------------  or maybe not?  ---------------------------"
               if success
-                ::SiteUserMailer.new_registration( site_user ).deliver_now
                 env['steam.liquid_assigns'].merge!({ 'site_user_created' => true })
               else
                 env['steam.liquid_assigns'].merge!({ 'site_user_created' => false })
@@ -67,6 +67,8 @@ module LocomotiveEngineAuthentication
               success = confirmation_site_user.save
               if success
                 env['steam.liquid_assigns'].merge!({ 'messages' => "sucess_email_confirm_message" })
+
+                ::SiteUserMailer.new_registration( confirmation_site_user ).deliver_now
               else
                 env['steam.liquid_assigns'].merge!({ 'messages' => "save_failure_email_confirm_message" })
               end
@@ -166,7 +168,6 @@ module LocomotiveEngineAuthentication
               site_user.doccheck = true
               site_user.locked = false
               success = site_user.save
-              # raise "X"
               if success
                 request.session[:current_site_user] = site_user
                 request.session[:doccheck_site_user] = nil
