@@ -44,9 +44,7 @@ module LocomotiveEngineAuthentication
               request.session[:doccheck_site_user] = params[:site_user]
               redirect_to_page site.protected_doccheck_page_handle , 302
             elsif site_user.valid? and !site_user.doccheck
-              puts "-------------------- the next line is going to crash :-( ---------------------------"
               success = site_user.save
-              puts "--------------------  or maybe not?  ---------------------------"
               if success
                 env['steam.liquid_assigns'].merge!({ 'site_user_created' => true })
               else
