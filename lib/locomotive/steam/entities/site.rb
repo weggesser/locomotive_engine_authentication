@@ -32,5 +32,10 @@ class Locomotive::Steam::Site
     self[:request_reset_password_page_handle] || "index"
   end
   
+  attr_writer :request_email_confirmation_page_handle
+  def request_email_confirmation_page_handle
+    self[:request_email_confirmation_page_handle] || "index"
+  end
+  
   
 end
