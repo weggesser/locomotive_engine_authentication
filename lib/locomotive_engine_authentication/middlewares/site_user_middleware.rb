@@ -37,28 +37,30 @@ module LocomotiveEngineAuthentication
             end
             site_user.email_confirmed_token = SecureRandom.uuid
             site_user.email_confirmed = false
-            # TODO double check, if doccheck user should not need confirmation
-            site_user.email_confirmed = true if site_user.doccheck
+
+
             site_user.validate
+
+            success = site_user.save if site_user.valid?
             if site_user.valid? and site_user.doccheck
               request.session[:doccheck_site_user] = params[:site_user]
               redirect_to_page site.protected_doccheck_page_handle , 302
             elsif site_user.valid? and !site_user.doccheck
-              success = site_user.save
               if success
                 env['steam.liquid_assigns'].merge!({ 'site_user_created' => true })
               else
                 env['steam.liquid_assigns'].merge!({ 'site_user_created' => false })
               end
             end
-            ::SiteUserMailer.email_confirmation( site_user ).deliver_now if site_user.valid?
+            ::SiteUserMailer.email_confirmation( site_user ).deliver_now if site_user.valid? and !site_user.doccheck
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
           end
           
           # EMAIL CONFIRMATION
           if page.handle == site.request_email_confirmation_page_handle
             # TODO check if param equals the email of one user
-            confirmation_site_user = ::SiteUser.find params[:site_user_id]
+            # confirmation_site_user = ::SiteUser.find params[:site_user_id]
+            confirmation_site_user = ::SiteUser.find_by  email_confirmed_token: params[:confirmation_token]
             if !confirmation_site_user.nil? and confirmation_site_user.email_confirmed_token == params[:confirmation_token]
               confirmation_site_user.email_confirmed = true
               confirmation_site_user.email_confirmed_token = nil
@@ -167,8 +169,10 @@ module LocomotiveEngineAuthentication
               site_user.locked = false
               success = site_user.save
               if success
-                request.session[:current_site_user] = site_user
                 request.session[:doccheck_site_user] = nil
+                ::SiteUserMailer.email_confirmation( site_user ).deliver_now
+                # TODO Weiterleitung zur Registrierung
+                # TODO site_user in liquid Variablen speichern
                 redirect_to_page site.protected_default_page_handle , 302
               else
                 redirect_to_page site.protected_register_page_handle , 302
