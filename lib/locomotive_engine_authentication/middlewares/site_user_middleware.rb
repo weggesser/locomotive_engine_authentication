@@ -24,28 +24,28 @@ module LocomotiveEngineAuthentication
           # end
           
           
-          # REGISTRATION
-          if page.handle == site.protected_register_page_handle and (!params[:site_user].blank? or !request.session[:doccheck_site_user].nil?)
-            if !request.session[:doccheck_site_user].nil?
-              site_user = ::SiteUser.new request.session[:doccheck_site_user]
-              request.session[:doccheck_site_user] = nil
-            else
+          # REGISTRATION          
+          if page.handle == site.protected_register_page_handle and !params[:site_user].blank? # or !request.session[:doccheck_site_user].nil?)
+            
+            # if !request.session[:doccheck_site_user].nil?
+            #  site_user = ::SiteUser.new request.session[:doccheck_site_user]
+            #  request.session[:doccheck_site_user] = nil              
+            # else
               site_user = ::SiteUser.new params[:site_user]
               site_user.site_id = site._id
               site_user.doccheck = true if params[:site_user][:doccheck] == 'on'
               # site_user.save if site_user.valid?
-            end
+            # end
             site_user.email_confirmed_token = SecureRandom.uuid
             site_user.email_confirmed = false
 
-
             site_user.validate
-
-            success = site_user.save if site_user.valid?
+            
             if site_user.valid? and site_user.doccheck
-              request.session[:doccheck_site_user] = params[:site_user]
-              redirect_to_page site.protected_doccheck_page_handle , 302
+              request.session[:doccheck_site_user] = params[:site_user].merge({ email_confirmed_token: site_user.email_confirmed_token, email_confirmed: false })
+              redirect_to_page site.protected_doccheck_page_handle, 302
             elsif site_user.valid? and !site_user.doccheck
+              success = site_user.save if site_user.valid?
               if success
                 env['steam.liquid_assigns'].merge!({ 'site_user_created' => true })
               else
@@ -54,26 +54,65 @@ module LocomotiveEngineAuthentication
             end
             ::SiteUserMailer.email_confirmation( site_user ).deliver_now if site_user.valid? and !site_user.doccheck
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+          end 
+          
+          # DOCCHECK USER RETURN ASSIGNMENT
+          if page.handle == site.protected_register_page_handle and !request.session[:doccheck_intermediate_site_user].nil?
+            begin
+              site_user = ::SiteUser.find request.session[:doccheck_intermediate_site_user]['_id']
+              env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid })
+              request.session[:doccheck_intermediate_site_user] = nil
+            rescue
+              env['steam.liquid_assigns'].merge!({ 'site_user' => nil })
+              request.session[:doccheck_intermediate_site_user] = nil
+            end
+          end
+          
+          
+          # DOCCHECK
+          if path == 'doccheck-return'
+            if !request.session[:doccheck_site_user].blank?
+              site_user = ::SiteUser.new request.session[:doccheck_site_user] # ::SiteUser.find request.session[:doccheck_site_user]
+              site_user.site_id = site._id
+              site_user.doccheck = true
+              site_user.locked = false
+              success = site_user.save
+              if success
+                
+                ::SiteUserMailer.email_confirmation( site_user ).deliver_now
+                # TODO Weiterleitung zur Registrierung
+                # TODO site_user in liquid Variablen speichern
+                # redirect_to_page site.protected_default_page_handle , 302
+              end
+              request.session[:doccheck_intermediate_site_user] = site_user
+            end
+            request.session[:doccheck_site_user] = nil
+            redirect_to_page site.protected_register_page_handle, 302
           end
           
           # EMAIL CONFIRMATION
-          if page.handle == site.request_email_confirmation_page_handle
+          if page.handle == site.protected_register_page_handle and !params[:confirmation_token].blank?
             # TODO check if param equals the email of one user
-            # confirmation_site_user = ::SiteUser.find params[:site_user_id]
-            confirmation_site_user = ::SiteUser.find_by  email_confirmed_token: params[:confirmation_token]
-            if !confirmation_site_user.nil? and confirmation_site_user.email_confirmed_token == params[:confirmation_token]
-              confirmation_site_user.email_confirmed = true
-              confirmation_site_user.email_confirmed_token = nil
-              success = confirmation_site_user.save
-              if success
-                env['steam.liquid_assigns'].merge!({ 'messages' => "sucess_email_confirm_message" })
-
-                ::SiteUserMailer.new_registration( confirmation_site_user ).deliver_now
+            # confirmation_site_user = ::SiteUser.find params[:site_user_id]#
+            begin
+              confirmation_site_user = ::SiteUser.find_by  email_confirmed_token: params[:confirmation_token]
+              if !confirmation_site_user.nil? # and confirmation_site_user.email_confirmed_token == params[:confirmation_token]
+                confirmation_site_user.email_confirmed = true
+                confirmation_site_user.email_confirmed_token = nil
+                success = confirmation_site_user.save
+                if success
+                  env['steam.liquid_assigns'].merge!({ 'messages' => "sucess_email_confirm_message" })
+                  ::SiteUserMailer.new_registration( confirmation_site_user ).deliver_now
+                else
+                  env['steam.liquid_assigns'].merge!({ 'messages' => "save_failure_email_confirm_message" })
+                end
               else
-                env['steam.liquid_assigns'].merge!({ 'messages' => "save_failure_email_confirm_message" })
+                env['steam.liquid_assigns'].merge!({ 'messages' => "failure_email_reset_message" })
               end
-            else
-              env['steam.liquid_assigns'].merge!({ 'messages' => "failure_email_reset_message" })
+              env['steam.liquid_assigns'].merge!({ 'site_user' => confirmation_site_user.to_liquid })
+              # Log the User in if already legitimated via doccheck
+              request.session[:current_site_user] = confirmation_site_user if confirmation_site_user.doccheck
+            rescue
             end
           end
           
@@ -163,28 +202,7 @@ module LocomotiveEngineAuthentication
             redirect_to_page site.protected_default_page_handle , 302
           end
           
-          # DOCCHECK
-          if path == 'doccheck-return'
-            if !request.session[:doccheck_site_user].blank?
-              site_user = ::SiteUser.new request.session[:doccheck_site_user] # ::SiteUser.find request.session[:doccheck_site_user]
-              site_user.site_id = site._id
-              site_user.doccheck = true
-              site_user.locked = false
-              success = site_user.save
-              if success
-                request.session[:doccheck_site_user] = nil
-                ::SiteUserMailer.email_confirmation( site_user ).deliver_now
-                # TODO Weiterleitung zur Registrierung
-                # TODO site_user in liquid Variablen speichern
-                redirect_to_page site.protected_default_page_handle , 302
-              else
-                redirect_to_page site.protected_register_page_handle , 302
-              end
-            else
-              request.session[:doccheck_site_user] = nil
-              redirect_to_page site.protected_register_page_handle , 302
-            end
-          end
+          
         
         else
           # WAGON HERE !!!
