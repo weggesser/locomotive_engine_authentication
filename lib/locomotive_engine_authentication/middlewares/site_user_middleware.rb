@@ -183,6 +183,8 @@ module LocomotiveEngineAuthentication
             site_user = SiteUser.where({ id: request.session[:current_site_user]['id'] }).first
             env['steam.liquid_assigns'].merge!({ 'site_user' => site_user.to_liquid }) if site_user
             if site_user and !params[:site_user].blank? and request.session[:current_site_user] != nil
+              
+              params[:site_user]['newsletter_recipient'] = false if params[:site_user]['newsletter_recipient'].nil?
               if site_user.update_attributes( params[:site_user] )
                 # What is that?
                 request.session[:current_site_user] = site_user
