@@ -10,3 +10,5 @@
 
 // Ignore built gemfiles
 *.gem
+
+.DS_Store
