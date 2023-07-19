@@ -1,3 +1,5 @@
+**ARCHIVED**
+
 # LocomotiveEngineAuthentication
 
 ## Installation
